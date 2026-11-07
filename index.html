@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bursa Saham Teman</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2332;
+    --border: #2d3a4d;
+    --text: #e8eef5;
+    --muted: #8b9bb4;
+    --green: #00d4aa;
+    --red: #ff5c5c;
+    --blue: #4da6ff;
+    --yellow: #ffc107;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 { font-size: 1.7rem; font-weight: 700; }
+  h1 span { color: var(--green); }
+  .room-info { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .stats {
+    display: flex;
+    gap: 14px;
+    background: var(--card);
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+  .stat-value { font-size: 1.15rem; font-weight: 700; }
+  .stat-value.cash { color: var(--yellow); }
+  .stat-value.total { color: var(--green); }
+  .grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .stock-list { padding: 6px; max-height: 65vh; overflow-y: auto; }
+  .stock-item {
+    display: grid;
+    grid-template-columns: 55px 1fr 85px 60px 120px;
+    gap: 6px;
+    align-items: center;
+    padding: 10px 8px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    background: rgba(255,255,255,0.02);
+    font-size: 0.88rem;
+  }
+  .symbol { font-weight: 700; }
+  .name { font-size: 0.82rem; }
+  .desc { font-size: 0.7rem; color: #6b7a90; }
+  .owned { font-size: 0.75rem; color: var(--muted); }
+  .price { font-weight: 600; text-align: right; }
+  .change { font-size: 0.8rem; font-weight: 600; text-align: right; }
+  .change.up { color: var(--green); }
+  .change.down { color: var(--red); }
+  .actions { display: flex; gap: 4px; }
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  .btn-buy { background: var(--green); color: #0f1419; }
+  .btn-sell { background: var(--red); color: white; }
+  .btn-sell:disabled { opacity: 0.4; cursor: not-allowed; }
+  .news-list { padding: 12px; }
+  .news-item {
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.84rem;
+  }
+  .news-item:last-child { border: none; }
+  .my-holdings { padding: 12px; font-size: 0.85rem; }
+  .holding-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .holding-row:last-child { border: none; }
+  #joinScreen {
+    max-width: 420px;
+    margin: 70px auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  #joinScreen h2 { margin-bottom: 8px; }
+  #joinScreen p { color: var(--muted); margin-bottom: 18px; font-size: 0.9rem; }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  .join-btn {
+    width: 100%;
+    background: var(--green);
+    color: #0f1419;
+    padding: 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    width: 90%;
+    max-width: 340px;
+  }
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions button { flex: 1; }
+  footer { margin-top: 16px; text-align: center; color: var(--muted); font-size: 0.75rem; }
+  .controls { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .controls button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+  }
+</style>
+</head>
+<body>
+<div id="joinScreen">
+  <h2>Bursa Saham Teman</h2>
+  <p>Masukkan kode room yang sama biar harga & berita sinkron dengan teman.</p>
+  <input type="text" id="roomInput" placeholder="Kode room (contoh: TEMAN123)" maxlength="20" style="text-transform:uppercase">
+  <button class="join-btn" onclick="joinRoom()">Masuk Game</button>
+  <p style="margin-top:14px;font-size:0.75rem">Harga update setiap 20 menit • 5 berita setiap 3 jam</p>
+</div>
+
+<div class="container" id="gameScreen" style="display:none">
+  <header>
+    <div>
+      <h1>Bursa <span>Saham Teman</span></h1>
+      <div class="room-info">Room: <b id="roomDisplay"></b> • Hari ini</div>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Uang Tunai</div>
+        <div class="stat-value cash" id="cash">$1,000.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Portofolio</div>
+        <div class="stat-value" id="portfolio">$0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Value</div>
+        <div class="stat-value total" id="total">$1,000.00</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">Berita Pasar (Update setiap 3 jam)</div>
+        <div class="news-list" id="newsList"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">Daftar Saham</div>
+        <div class="stock-list" id="stockList"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-header">Holding Saya</div>
+        <div class="my-holdings" id="myHoldings">
+          <div style="color:var(--muted)">Belum punya saham</div>
+        </div>
+        <div style="padding:12px;border-top:1px solid var(--border);background:rgba(0,212,170,0.05)">
+          <div style="display:flex;justify-content:space-between;font-weight:700">
+            <span>Total Value</span>
+            <span id="holdingsTotal" style="color:var(--green)">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="resetGame()">Reset Game</button>
+    <button onclick="showScore()">Lihat Skor</button>
+  </div>
+
+  <footer>Harga update setiap 20 menit • Berita 5 buah setiap 3 jam • Bukan saran investasi nyata</footer>
+</div>
+
+<div class="modal" id="tradeModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Beli Saham</h3>
+    <div id="modalInfo" style="margin-bottom:12px;color:var(--muted);font-size:0.85rem"></div>
+    <input type="number" id="shareInput" min="1" value="10">
+    <div class="modal-actions">
+      <button onclick="closeModal()" style="background:#2d3a4d;color:white">Batal</button>
+      <button id="confirmBtn" class="btn-buy">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STARTING_CASH = 1000;
+let cash = STARTING_CASH;
+let holdings = {}; // { symbol: { qty: number, avgPrice: number } }
+let prices = {};
+let prevPrices = {};
+let currentTrade = null;
+let roomCode = "";
+let lastPriceUpdate = 0;
+
+const STOCKS = [
+  { symbol: "WRI", name: "Warung Asap Rica² Idola", base: 29, desc: "Restoran Bintang 5 dan terkenal", vol: 0.045 },
+  { symbol: "KPD", name: "Kentang Perkedel", base: 103, desc: "Bidang Pangan Khusus Sayur Buah", vol: 0.04 },
+  { symbol: "HRT", name: "Herta", base: 73, desc: "Bidang Mobil dan Kendaraan", vol: 0.038 },
+  { symbol: "AGE", name: "PT Ahtong Global Eco Green", base: 88, desc: "Bidang Green Business", vol: 0.042 },
+  { symbol: "AHC", name: "PT Ahtong Healthy Care", base: 26, desc: "Bidang Kesehatan", vol: 0.05 },
+  { symbol: "ALC", name: "PT Ahtong Logistic Center", base: 102, desc: "Bidang Logistik Antarnegara", vol: 0.036 },
+  { symbol: "CHC", name: "Compas Healthy Center", base: 23, desc: "Bidang Kesehatan", vol: 0.048 },
+  { symbol: "BLW", name: "Bluewood", base: 453, desc: "Bidang Kehutanan dan Produk hutan", vol: 0.032 },
+  { symbol: "FRT", name: "Fruit", base: 14, desc: "Bidang Pangan Khusus Buah", vol: 0.055 },
+  { symbol: "ZTA", name: "Zeta", base: 13, desc: "Bidang Teknologi", vol: 0.06 },
+  { symbol: "MKN", name: "MyKonos Company", base: 141, desc: "Bidang Parfum", vol: 0.04 },
+  { symbol: "JGD", name: "JengaDoen", base: 65, desc: "Hotel Bintang 5 dan terkenal", vol: 0.043 },
+];
+
+const NEWS_TEMPLATES = [
+  "WRI luncurkan menu baru yang viral!",
+  "KPD dapat kontrak besar dari supermarket.",
+  "HRT umumkan mobil listrik terbaru.",
+  "AGE dapat penghargaan green company.",
+  "AHC buka cabang rumah sakit baru.",
+  "ALC ekspansi rute logistik ke Eropa.",
+  "CHC rilis produk kesehatan terbaru.",
+  "BLW dapat izin ekspor kayu premium.",
+  "FRT panen raya, harga buah turun.",
+  "ZTA rilis update aplikasi AI.",
+  "MKN umumkan ekspansi internasional.",
+  "JGD dapat investor baru.",
+  "Pasar sedang optimis hari ini.",
+  "Isu bahan baku mempengaruhi sektor pangan.",
+  "Investor asing masuk ke sektor teknologi.",
+  "Kebijakan baru pemerintah mendukung green business."
+];
+
+function getDaySeed() {
+  const now = new Date();
+  return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+}
+
+function getNewsSlot() {
+  return Math.floor(new Date().getHours() / 3);
+}
+
+function seededRandom(seed) {
+  let s = seed % 233280;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function formatMoney(n) {
+  return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function get20MinSlot() {
+  const now = new Date();
+  return Math.floor(now.getMinutes() / 20) + now.getHours() * 3;
+}
+
+function updatePricesIfNeeded() {
+  const currentSlot = get20MinSlot();
+  const daySeed = getDaySeed();
+  const slotKey = daySeed * 100 + currentSlot;
+  
+  if (lastPriceUpdate === slotKey) return;
+  lastPriceUpdate = slotKey;
+
+  const seed = slotKey + hashCode(roomCode);
+  const rng = seededRandom(seed);
+
+  STOCKS.forEach(s => {
+    prevPrices[s.symbol] = prices[s.symbol];
+    // ±2% to ±6% movement every 20 min
+    const pctChange = (rng() - 0.48) * 0.12;
+    prices[s.symbol] = Math.max(0.5, +(prices[s.symbol] * (1 + pctChange)).toFixed(2));
+  });
+}
+
+function initPrices() {
+  const daySeed = getDaySeed();
+  const seed = daySeed + hashCode(roomCode);
+  const rng = seededRandom(seed);
+  STOCKS.forEach(s => {
+    prices[s.symbol] = +(s.base * (0.85 + rng() * 0.3)).toFixed(2);
+    prevPrices[s.symbol] = prices[s.symbol];
+  });
+  lastPriceUpdate = 0;
+  updatePricesIfNeeded();
+}
+
+function generateNews() {
+  const slot = getNewsSlot();
+  const seed = getDaySeed() * 10 + slot + hashCode(roomCode);
+  const rng = seededRandom(seed);
+  const news = [];
+  const used = new Set();
+  for (let i = 0; i < 5; i++) {
+    let idx;
+    do {
+      idx = Math.floor(rng() * NEWS_TEMPLATES.length);
+    } while (used.has(idx) && used.size < NEWS_TEMPLATES.length);
+    used.add(idx);
+    news.push(NEWS_TEMPLATES[idx]);
+  }
+  return news;
+}
+
+function renderNews() {
+  const news = generateNews();
+  document.getElementById("newsList").innerHTML = news.map(n => 
+    `<div class="news-item">• ${n}</div>`
+  ).join('');
+}
+
+function renderStocks() {
+  updatePricesIfNeeded();
+  const list = document.getElementById("stockList");
+  list.innerHTML = STOCKS.map(s => {
+    const price = prices[s.symbol];
+    const prev = prevPrices[s.symbol];
+    const change = price - prev;
+    const pct = prev ? ((change / prev) * 100).toFixed(2) : "0.00";
+    const isUp = change >= 0;
+    const owned = holdings[s.symbol]?.qty || 0;
+    return `
+      <div class="stock-item">
+        <div class="symbol">${s.symbol}</div>
+        <div>
+          <div class="name">${s.name}</div>
+          <div class="desc">${s.desc}</div>
+          <div class="owned">Milik: <b>${owned}</b></div>
+        </div>
+        <div class="price">${formatMoney(price)}</div>
+        <div class="change ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${pct}%</div>
+        <div class="actions">
+          <button class="btn-buy" onclick="openTrade('${s.symbol}','buy')">Beli</button>
+          <button class="btn-sell" onclick="openTrade('${s.symbol}','sell')" ${owned === 0 ? 'disabled' : ''}>Jual</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHoldings() {
+  const el = document.getElementById("myHoldings");
+  const items = STOCKS.filter(s => (holdings[s.symbol]?.qty || 0) > 0);
+  if (!items.length) {
+    el.innerHTML = '<div style="color:var(--muted)">Belum punya saham</div>';
+    return;
+  }
+  el.innerHTML = items.map(s => {
+    const h = holdings[s.symbol];
+    const qty = h.qty;
+    const currentPrice = prices[s.symbol];
+    const currentValue = qty * currentPrice;
+    const cost = qty * h.avgPrice;
+    const pl = currentValue - cost;
+    const plPct = cost ? ((pl / cost) * 100).toFixed(2) : "0.00";
+    const isProfit = pl >= 0;
+    return `
+      <div class="holding-row">
+        <div>
+          <div>${s.symbol} × ${qty}</div>
+          <div style="font-size:0.75rem;color:var(--muted)">Avg: ${formatMoney(h.avgPrice)}</div>
+        </div>
+        <div style="text-align:right">
+          <div>${formatMoney(currentValue)}</div>
+          <div style="font-size:0.75rem;color:${isProfit ? 'var(--green)' : 'var(--red)'}">
+            ${isProfit ? '+' : ''}${formatMoney(pl)} (${isProfit ? '+' : ''}${plPct}%)
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateStats() {
+  let portfolio = 0;
+  STOCKS.forEach(s => {
+    const qty = holdings[s.symbol]?.qty || 0;
+    portfolio += qty * prices[s.symbol];
+  });
+  const total = cash + portfolio;
+  document.getElementById("cash").textContent = formatMoney(cash);
+  document.getElementById("portfolio").textContent = formatMoney(portfolio);
+  document.getElementById("total").textContent = formatMoney(total);
+  const ht = document.getElementById("holdingsTotal");
+  if (ht) ht.textContent = formatMoney(portfolio);
+}
+
+function openTrade(symbol, type) {
+  currentTrade = { symbol, type };
+  const stock = STOCKS.find(s => s.symbol === symbol);
+  const price = prices[symbol];
+  document.getElementById("modalTitle").textContent = type === 'buy' ? `Beli ${symbol}` : `Jual ${symbol}`;
+  document.getElementById("modalInfo").textContent = `${stock.name} • ${formatMoney(price)}`;
+  document.getElementById("shareInput").value = 10;
+  document.getElementById("confirmBtn").className = type === 'buy' ? 'btn-buy' : 'btn-sell';
+  document.getElementById("confirmBtn").textContent = type === 'buy' ? 'Beli' : 'Jual';
+  document.getElementById("tradeModal").classList.add("show");
+  document.getElementById("shareInput").focus();
+}
+
+function closeModal() {
+  document.getElementById("tradeModal").classList.remove("show");
+  currentTrade = null;
+}
+
+function confirmTrade() {
+  if (!currentTrade) return;
+  const qty = parseInt(document.getElementById("shareInput").value);
+  if (!qty || qty < 1) return alert("Masukkan jumlah yang valid!");
+
+  const { symbol, type } = currentTrade;
+  const price = prices[symbol];
+  const total = +(price * qty).toFixed(2);
+
+  if (type === 'buy') {
+    if (cash < total) return alert("Uang tunai tidak cukup!");
+    cash = +(cash - total).toFixed(2);
+    if (!holdings[symbol]) {
+      holdings[symbol] = { qty: 0, avgPrice: 0 };
+    }
+    const h = holdings[symbol];
+    const newQty = h.qty + qty;
+    h.avgPrice = +((h.avgPrice * h.qty + price * qty) / newQty).toFixed(2);
+    h.qty = newQty;
+  } else {
+    if (!holdings[symbol] || holdings[symbol].qty < qty) return alert("Saham tidak cukup!");
+    cash = +(cash + total).toFixed(2);
+    holdings[symbol].qty -= qty;
+    if (holdings[symbol].qty === 0) {
+      delete holdings[symbol];
+    }
+  }
+
+  updateStats();
+  renderStocks();
+  renderHoldings();
+  closeModal();
+}
+
+function resetGame() {
+  if (!confirm("Reset semua progress?")) return;
+  cash = STARTING_CASH;
+  holdings = {};
+  initPrices();
+  updateStats();
+  renderStocks();
+  renderHoldings();
+  renderNews();
+}
+
+function showScore() {
+  let portfolio = 0;
+  STOCKS.forEach(s => {
+    const qty = holdings[s.symbol]?.qty || 0;
+    portfolio += qty * prices[s.symbol];
+  });
+  const total = cash + portfolio;
+  const profit = total - STARTING_CASH;
+  const pct = ((profit / STARTING_CASH) * 100).toFixed(2);
+  alert(`Room: ${roomCode}\n\nTotal kekayaan: ${formatMoney(total)}\nProfit: ${profit >= 0 ? '+' : ''}${formatMoney(profit)} (${pct}%)\n\nShare skor ini ke grup!`);
+}
+
+function joinRoom() {
+  const code = document.getElementById("roomInput").value.trim().toUpperCase();
+  if (!code || code.length < 3) return alert("Masukkan kode room minimal 3 huruf!");
+  roomCode = code;
+  document.getElementById("roomDisplay").textContent = roomCode;
+  document.getElementById("joinScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+  initPrices();
+  renderNews();
+  renderStocks();
+  renderHoldings();
+  updateStats();
+
+  // Refresh prices & news periodically
+  setInterval(() => {
+    updatePricesIfNeeded();
+    renderStocks();
+    renderHoldings();
+    updateStats();
+    renderNews();
+  }, 30000); // check every 30 seconds
+}
+
+document.getElementById("confirmBtn").onclick = confirmTrade;
+document.getElementById("shareInput").addEventListener("keypress", e => {
+  if (e.key === "Enter") confirmTrade();
+});
+document.getElementById("roomInput").addEventListener("keypress", e => {
+  if (e.key === "Enter") joinRoom();
+});
+</script>
+</body>
+</html>

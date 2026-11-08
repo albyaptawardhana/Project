@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bursa Saham Teman</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2332;
+    --border: #2d3a4d;
+    --text: #e8eef5;
+    --muted: #8b9bb4;
+    --green: #00d4aa;
+    --red: #ff5c5c;
+    --blue: #4da6ff;
+    --yellow: #ffc107;
+    --purple: #a855f7;
+    --orange: #ff9800;
+    --gold: #ffd700;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  h1 { font-size: 1.7rem; font-weight: 700; }
+  h1 span { color: var(--green); }
+  .room-info { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .stats {
+    display: flex;
+    gap: 14px;
+    background: var(--card);
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; }
+  .stat-value { font-size: 1.15rem; font-weight: 700; }
+  .stat-value.cash { color: var(--yellow); }
+  .stat-value.total { color: var(--green); }
+  .stat-value.loan { color: var(--red); }
+  
+  .grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .stock-list { padding: 6px; max-height: 50vh; overflow-y: auto; }
+  .stock-item {
+    display: grid;
+    grid-template-columns: 55px 1fr 85px 60px 120px;
+    gap: 6px;
+    align-items: center;
+    padding: 10px 8px;
+    border-radius: 8px;
+    margin-bottom: 3px;
+    background: rgba(255,255,255,0.02);
+    font-size: 0.88rem;
+  }
+  .symbol { font-weight: 700; }
+  .name { font-size: 0.82rem; }
+  .desc { font-size: 0.7rem; color: #6b7a90; }
+  .owned { font-size: 0.75rem; color: var(--muted); }
+  .price { font-weight: 600; text-align: right; }
+  .change { font-size: 0.8rem; font-weight: 600; text-align: right; }
+  .change.up { color: var(--green); }
+  .change.down { color: var(--red); }
+  .actions { display: flex; gap: 4px; }
+  
+  .badge-warrior {
+    display: inline-block;
+    background: var(--orange);
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 4px;
+  }
+
+  button {
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.8rem;
+  }
+  .btn-buy { background: var(--green); color: #0f1419; }
+  .btn-sell { background: var(--red); color: white; }
+  .btn-chart { background: var(--blue); color: white; }
+  .btn-sell:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-loan { background: var(--purple); color: white; }
+  .btn-safe { background: var(--gold); color: #0f1419; }
+  
+  .news-list { padding: 12px; max-height: 320px; overflow-y: auto; }
+  .news-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.01);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .news-item:last-child { margin-bottom: 0; }
+  .news-title { font-weight: 700; color: var(--blue); margin-bottom: 6px; font-size: 0.95rem; }
+  .news-body p { margin-bottom: 6px; line-height: 1.4; color: #c3d0e0; }
+  
+  .my-holdings { padding: 12px; font-size: 0.85rem; }
+  .holding-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .holding-row:last-child { border: none; }
+  
+  #joinScreen {
+    max-width: 420px;
+    margin: 60px auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+  }
+  #joinScreen h2 { margin-bottom: 8px; }
+  #joinScreen p { color: var(--muted); margin-bottom: 18px; font-size: 0.9rem; }
+  
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 12px;
+  }
+  
+  .join-btn {
+    width: 100%;
+    background: var(--green);
+    color: #0f1419;
+    padding: 12px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    width: 90%;
+    max-width: 480px;
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 14px; }
+  .modal-actions button { flex: 1; padding: 10px; }
+  
+  .player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+  .player-item:last-child { border: none; }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .status-dot.online { background: var(--green); }
+  .status-dot.offline { background: var(--muted); }
+  
+  .rupd-box {
+    background: rgba(168, 85, 247, 0.1);
+    border: 1px dashed var(--purple);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .rupd-timer { font-size: 1rem; font-weight: 700; color: var(--purple); margin-top: 4px; }
+
+  .market-alert-box {
+    background: rgba(255, 92, 92, 0.15);
+    border: 1px solid var(--red);
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+    display: none;
+  }
+  .market-alert-box.active { display: block; }
+
+  .info-banner {
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid var(--orange);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+
+  footer { margin-top: 16px; text-align: center; color: var(--muted); font-size: 0.75rem; }
+  .controls { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .controls button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+  }
+  
+  canvas { width: 100%; height: 200px; background: #0b0f14; border-radius: 8px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="joinScreen">
+  <h2>Bursa Saham Teman</h2>
+  <p>Masukkan nama kamu dan kode room untuk bermain bareng teman!</p>
+  <input type="text" id="playerNameInput" placeholder="Nama Pemain (contoh: Raden)" maxlength="15">
+  <input type="text" id="roomInput" placeholder="Kode Room (contoh: TEMAN123)" maxlength="20" style="text-transform:uppercase">
+  <button class="join-btn" onclick="joinRoom()">Masuk Game</button>
+  <p style="margin-top:14px;font-size:0.75rem">Update Harga: 10 Jam • Berita Saham: 3 Jam • Safe Haven: 1 Jam • RUPD: 1 Minggu</p>
+</div>
+
+<div class="container" id="gameScreen" style="display:none">
+  <header>
+    <div>
+      <h1>Bursa <span>Saham Teman</span></h1>
+      <div class="room-info">Pemain: <b id="playerDisplay" style="color:var(--yellow)"></b> • Room: <b id="roomDisplay"></b></div>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Uang Tunai</div>
+        <div class="stat-value cash" id="cash">$1,000.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Portofolio Saham</div>
+        <div class="stat-value" id="portfolio">$0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Safe Haven</div>
+        <div class="stat-value" style="color:var(--gold)" id="safePortfolio">$0.00</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total Net Worth</div>
+        <div class="stat-value total" id="total">$1,000.00</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Market Correction Warning Banner -->
+  <div class="market-alert-box" id="marketAlertBox">
+    ⚠️ <b>FASE KOREKSI PASAR SERENTAK SEDANG BERLANGSUNG!</b> Seluruh saham sedang turun (-4% s.d -6.8%). Amankan asetmu ke Safe Haven (Emas, Obligasi, Kripto)!
+  </div>
+
+  <div class="info-banner">
+    <b>🛡️ Panduan Safe Haven & Koreksi Pasar:</b><br>
+    Setiap 3 minggu, pasar mengalami koreksi 4 hari. Gunakan aset pelindung nilai (Emas & Obligasi stabil; Kripto volatil tinggi) yang harga dan berita khususnya diperbarui setiap <b>1 jam sekali</b>.
+  </div>
+
+  <div class="grid">
+    <div>
+      <!-- Tombol Tab Berita -->
+      <div class="card">
+        <div class="card-header">
+          <span>Pusat Berita Pasar</span>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-chart" style="padding:4px 8px; font-size:0.75rem;" onclick="switchNewsTab('stock')">Berita Saham (3 Jam)</button>
+            <button class="btn-safe" style="padding:4px 8px; font-size:0.75rem;" onclick="switchNewsTab('safe')">Berita Safe Haven (1 Jam)</button>
+          </div>
+        </div>
+        <div class="news-list" id="newsList"></div>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span>Daftar Saham Emiten</span>
+        </div>
+        <div class="stock-list" id="stockList"></div>
+      </div>
+
+      <!-- Safe Haven Market List -->
+      <div class="card">
+        <div class="card-header">
+          <span>🛡️ Pasar Aset Lindung Nilai (Safe Haven)</span>
+          <span style="font-size:0.75rem; color:var(--gold)">Update Setiap 1 Jam</span>
+        </div>
+        <div class="stock-list" id="safeHavenList"></div>
+      </div>
+    </div>
+    
+    <div>
+      <!-- Papan Jadwal RUPD -->
+      <div class="card">
+        <div class="card-header">📅 Papan Jadwal RUPD</div>
+        <div style="padding:12px;">
+          <div class="rupd-box">
+            <div style="font-size:0.8rem; color:var(--muted)">Rapat Umum Pembagian Dividen</div>
+            <div class="rupd-timer" id="rupdTimer">Memuat...</div>
+          </div>
+          <button class="join-btn" style="font-size:0.85rem; padding:8px" onclick="claimWeeklyDividendsManual()">Cek / Klaim Dividen RUPD</button>
+        </div>
+      </div>
+
+      <!-- Holding Saham Saya -->
+      <div class="card">
+        <div class="card-header">Holding Saham Saya</div>
+        <div class="my-holdings" id="myHoldings">
+          <div style="color:var(--muted)">Belum punya saham</div>
+        </div>
+        <div style="padding:12px;border-top:1px solid var(--border);background:rgba(0,212,170,0.05)">
+          <div style="display:flex;justify-content:space-between;font-weight:700">
+            <span>Total Nilai Saham</span>
+            <span id="holdingsTotal" style="color:var(--green)">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holding Safe Haven Saya -->
+      <div class="card">
+        <div class="card-header">Holding Safe Haven Saya</div>
+        <div class="my-holdings" id="mySafeHoldings">
+          <div style="color:var(--muted)">Belum punya aset safe haven</div>
+        </div>
+        <div style="padding:12px;border-top:1px solid var(--border);background:rgba(255,215,0,0.05)">
+          <div style="display:flex;justify-content:space-between;font-weight:700">
+            <span>Total Nilai Safe Haven</span>
+            <span id="safeHoldingsTotal" style="color:var(--gold)">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daftar Pemain Multiplayer -->
+      <div class="card">
+        <div class="card-header">
+          <span>Daftar Pemain Room</span>
+          <span style="font-size:0.75rem; color:var(--muted)">Multiplayer Sync</span>
+        </div>
+        <div style="padding:12px;" id="playerList"></div>
+      </div>
+
+      <!-- Pinjaman Kebangkrutan -->
+      <div class="card">
+        <div class="card-header">Bantuan Kebangkrutan & Dana</div>
+        <div style="padding:12px; font-size:0.85rem">
+          <p style="color:var(--muted); margin-bottom:8px">Pinjaman darurat maks <b>$100,000</b>. Bunga 9.8% per minggu. Lewat 1 minggu denda jadi 12%.</p>
+          <div id="loanInfo" style="margin-bottom:10px;"></div>
+          <div style="display:flex; gap:6px">
+            <button class="btn-loan" style="flex:1" onclick="openLoanModal('borrow')">Pinjam</button>
+            <button class="btn-buy" style="flex:1" onclick="openLoanModal('repay')">Bayar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="resetGame()">Reset Game</button>
+    <button onclick="showScore()">Lihat Skor</button>
+    <button onclick="claimWeeklyDividendsManual()">Cek Dividen Mingguan</button>
+  </div>
+
+  <footer>Update Saham: 10 Jam • Berita Saham: 3 Jam • Safe Haven: 1 Jam • Koreksi Market: 3 Minggu Sekali • RUPD Mingguan</footer>
+</div>
+
+<!-- Modal Grafik -->
+<div class="modal" id="chartModal">
+  <div class="modal-content">
+    <h3 id="chartModalTitle">Grafik Saham</h3>
+    <div style="font-size:0.8rem; color:var(--muted); margin-bottom:4px">
+      🟢 Line Harga Saham | 🟡 <b style="color:var(--yellow)">Garis Keberuntungan</b> (Indikator Analisis)
+    </div>
+    <canvas id="stockChartCanvas"></canvas>
+    <div class="modal-actions">
+      <button onclick="closeChartModal()" style="background:#2d3a4d;color:white">Tutup Grafik</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Transaksi Saham -->
+<div class="modal" id="tradeModal">
+  <div class="modal-content">
+    <h3 id="modalTitle">Beli Saham</h3>
+    <div id="modalInfo" style="margin-bottom:12px;color:var(--muted);font-size:0.85rem"></div>
+    <input type="number" id="shareInput" min="1" value="10">
+    <div class="modal-actions">
+      <button onclick="closeModal()" style="background:#2d3a4d;color:white">Batal</button>
+      <button id="confirmBtn" class="btn-buy">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Transaksi Safe Haven -->
+<div class="modal" id="safeTradeModal">
+  <div class="modal-content">
+    <h3 id="safeModalTitle">Beli Aset Safe Haven</h3>
+    <div id="safeModalInfo" style="margin-bottom:12px;color:var(--muted);font-size:0.85rem"></div>
+    <input type="number" id="safeShareInput" min="1" value="1">
+    <div class="modal-actions">
+      <button onclick="closeSafeModal()" style="background:#2d3a4d;color:white">Batal</button>
+      <button id="confirmSafeBtn" class="btn-safe">Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pinjaman -->
+<div class="modal" id="loanModal">
+  <div class="modal-content">
+    <h3 id="loanModalTitle">Dana Kebangkrutan</h3>
+    <p id="loanModalDesc" style="margin-bottom:12px;color:var(--muted);font-size:0.85rem"></p>
+    <input type="number" id="loanInput" min="1" max="100000" placeholder="Jumlah ($)">
+    <div class="modal-actions">
+      <button onclick="closeLoanModal()" style="background:#2d3a4d;color:white">Batal</button>
+      <button id="confirmLoanBtn" class="btn-loan" onclick="confirmLoanAction()">Proses</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STARTING_CASH = 1000;
+const MAX_LOAN = 100000;
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+let cash = STARTING_CASH;
+let holdings = {};      // { symbol: { qty, avgPrice } }
+let safeHoldings = {};  // { id: { qty, avgPrice } }
+let prices = {};
+let prevPrices = {};
+let safePrices = {};
+let prevSafePrices = {};
+let priceHistory = {};
+let currentTrade = null;
+let currentSafeTrade = null;
+let roomCode = "";
+let playerName = "";
+let lastPriceUpdate = 0;
+let lastSafePriceUpdate = 0;
+let activeNewsTab = 'stock';
+
+let loanData = { amount: 0, borrowedTime: 0 };
+let lastDividendClaim = Date.now();
+
+const STOCKS = [
+  { symbol: "WRI", name: "Warung Asap Rica² Idola", base: 29, desc: "Restoran Bintang 5 terkenal", dividendRate: 0.03, warrior: false },
+  { symbol: "KPD", name: "Kentang Perkedel", base: 103, desc: "Pangan Khusus Sayur Buah", dividendRate: 0.055, warrior: true },
+  { symbol: "HRT", name: "Herta", base: 73, desc: "Bidang Mobil & Kendaraan", dividendRate: 0.02, warrior: false },
+  { symbol: "AGE", name: "PT Ahtong Global Eco Green", base: 88, desc: "Bidang Green Business", dividendRate: 0.035, warrior: false },
+  { symbol: "AHC", name: "PT Ahtong Healthy Care", base: 26, desc: "Bidang Kesehatan", dividendRate: 0.015, warrior: false },
+  { symbol: "ALC", name: "PT Ahtong Logistic Center", base: 102, desc: "Logistik Antarnegara", dividendRate: 0.04, warrior: false },
+  { symbol: "CHC", name: "Compas Healthy Center", base: 23, desc: "Bidang Kesehatan", dividendRate: 0.018, warrior: false },
+  { symbol: "BLW", name: "Bluewood", base: 453, desc: "Kehutanan & Produk Hutan", dividendRate: 0.05, warrior: false },
+  { symbol: "FRT", name: "Fruit", base: 14, desc: "Pangan Khusus Buah", dividendRate: 0.06, warrior: true },
+  { symbol: "ZTA", name: "Zeta", base: 13, desc: "Teknologi Sektor Stabil", dividendRate: 0.058, warrior: true },
+  { symbol: "MKN", name: "MyKonos Company", base: 141, desc: "Bidang Parfum", dividendRate: 0.038, warrior: false },
+  { symbol: "JGD", name: "JengaDoen", base: 65, desc: "Hotel Bintang 5 terkenal", dividendRate: 0.028, warrior: false },
+];
+
+const SAFE_ASSETS = [
+  { id: "GOLD", name: "Emas Batangan Antam", base: 1850, desc: "Lindung nilai stabil (Max naik 6%, turun 5-8%)", type: "stable" },
+  { id: "BOND", name: "Obligasi Pemerintah RI", base: 1000, desc: "Surat Berharga Negara (Stabil & Kupon)", type: "stable" },
+  { id: "CRYPTO", name: "Aset Kripto Global (BTC/ETH)", base: 3500, desc: "Aset spekulatif tinggi (Max naik 23%, turun 31%)", type: "volatile" }
+];
+
+// Database Berita Saham 3 Paragraf Lengkap untuk SEMUA Emiten
+const DETAILED_NEWS_DATABASE = {
+  "WRI": {
+    title: "WRI Ekspansi Menu Baru & Rekor Penjualan Cabang Utama",
+    p1: "Warung Asap Rica² Idola (WRI) resmi meluncurkan varian menu olahan bumbu rempah nusantara terbaru yang langsung memicu antrean panjang di berbagai kota besar. Langkah strategis ini diambil setelah riset konsumen menunjukkan lonjakan permintaan makanan pedas berkualitas tinggi.",
+    p2: "Faktor pendorong utama pertumbuhan ini adalah efisiensi rantai pasok pasokan daging lokal dan kontrak eksklusif dengan pemasok bahan baku utama. Hal ini menekan pengeluaran operasional hingga 14%, sehingga potensi margin laba bersih meningkat secara signifikan kuartal ini.",
+    p3: "Keuntungan jangka panjang bagi investor meliputi proyeksi pertumbuhan dividen dan pembukaan 15 cabang baru. Berdasarkan indikator ini, posisi saham WRI sangat menarik untuk di-BUY atau HOLD dalam portofolio Anda."
+  },
+  "KPD": {
+    title: "KPD Mengamankan Kontrak Ekspor & Pasokan Supermarket Internasional",
+    p1: "Kentang Perkedel (KPD) mengumumkan penandatanganan kontrak pasokan jangka panjang dengan jaringan supermarket multinasional. Kesepakatan ini mencakup distribusi produk olahan pangan sayur siap saji ke pasar regional.",
+    p2: "Kenaikan volume produksi dipicu oleh otomatisasi pabrik pemrosesan utama mereka yang berhasil melipatgandakan kapasitas harian. Sebagai tipe saham Dividend Warrior, arus kas KPD sangat stabil meski harga pasar cenderung konsisten datar.",
+    p3: "Bagi para pemegang saham tipe passive income, hal ini memberikan kepastian pencairan dividen berkala pada jadwal RUPD mingguan. Para analis menyarankan untuk HOLD atau menambahkan porsi simpanan."
+  },
+  "HRT": {
+    title: "HRT Merilis Prototipe Kendaraan Listrik Murah Bermenu Fitur Canggih",
+    p1: "Produsen otomotif HRT meluncurkan lini kendaraan listrik terbarunya yang ditargetkan untuk segmen pasar kelas menengah. Produk baru ini menawarkan efisiensi baterai hingga 20% lebih tinggi dibanding kompetitor di kelasnya.",
+    p2: "Faktor pendukung utama dibalik lompatan teknologi ini adalah kerja sama riset dengan laboratorium teknologi terkemuka serta subsidi material hijau dari pemerintah. Kendati demikian, terdapat sedikit hambatan akibat kenaikan harga impor komponen baterai.",
+    p3: "Prospek pertumbuhan HRT tetap sangat positif dengan pesanan inden yang melonjak pesat. Investor disarankan mempertimbangkan aksi BUKAN JUAL (HOLD/BUY) untuk memanfaatkan tren bullish jangka panjang."
+  },
+  "AGE": {
+    title: "AGE Raih Sertifikasi Eco Green & Insentif Pajak Energi Terbarukan",
+    p1: "PT Ahtong Global Eco Green (AGE) resmi memperoleh sertifikasi internasional atas komitmen penerapan teknologi ramah lingkungan di seluruh fasilitas operasionalnya. Pengakuan ini memperkuat dominasi AGE di industri green business.",
+    p2: "Sertifikasi ini memberikan insentif pemotongan pajak dari pemerintah yang langsung berdampak positif pada profitabilitas perusahaan. Selain itu, masuknya dana investasi hijau dari investor institusional luar negeri turut mendorong nilai buku emiten.",
+    p3: "Dengan portofolio proyek terbarukan yang terus menambah, saham AGE menjadi salah satu aset paling stabil saat pasar terkoreksi. Strategi terbaik saat ini adalah melakukan accumulation BUY."
+  },
+  "AHC": {
+    title: "AHC Resmikan 5 Rumah Sakit Baru & Ekspansi Layanan Telemedicine",
+    p1: "PT Ahtong Healthy Care (AHC) kembali memperluas jaringan medisnya dengan membuka lima fasilitas rumah sakit modern sekaligus peluncuran platform kesehatan digital terpadu.",
+    p2: "Ekspansi ini didanai oleh kombinasi laba ditahan dan kemitraan strategis tanpa menambah beban utang jangka panjang. Peningkatan jumlah pasien harian diproyeksikan akan mendongkrak pendapatan berulang (recurring income) hingga 25%.",
+    p3: "Secara keseluruhan, fundamen AHC berada pada posisi sangat sehat. Investor diproyeksikan menerima stabilitas pembagian dividen berkala, menjadikan saham ini sangat layak dilirik."
+  },
+  "ALC": {
+    title: "ALC Tambah Armada Logistik Antarnegara & Penurunan Tarif Kargo",
+    p1: "PT Ahtong Logistic Center (ALC) mengumumkan penambahan 20 kapal kargo kontainer baru untuk memperkuat jalur perdagangan antarnegara. Inisiatif ini merespons lonjakan volume pengiriman e-commerce global.",
+    p2: "Penurunan harga bahan bakar minyak dunia turut memberikan efisiensi margin yang signifikan bagi armada operasional ALC. Dengan waktu pengiriman yang lebih cepat, efisiensi operasional ALC meningkat lebih dari 18%.",
+    p3: "Imbal hasil yang kuat menjadikan ALC sebagai saham favorit pembagi dividen tinggi. Tren perdagangan saat ini memberikan sinyal BUY yang cukup kuat untuk jangka menengah."
+  },
+  "CHC": {
+    title: "CHC Luncurkan Pusat Riset Bioteknologi Medis Modern",
+    p1: "Compas Healthy Center (CHC) meresmikan fasilitas riset bioteknologi terbaru yang berfokus pada pengembangan obat generik berbiaya rendah dan efisiensi penanganan klinis.",
+    p2: "Dukungan hibah riset pemerintah dan kolaborasi bersama universitas terkemuka memangkas anggaran belanja riset internal hingga seperempatnya, memperkuat margin keuntungan bersih emiten.",
+    p3: "Investor disarankan untuk terus memantau kinerja saham CHC sebagai portofolio defensif yang handal saat terjadi ketidakpastian ekonomi makro."
+  },
+  "BLW": {
+    title: "BLW Peroleh Izin Lisensi Ekspor Kayu Premium ke Pasar Amerika & Eropa",
+    p1: "Bluewood (BLW) secara resmi mendapatkan lisensi eksklusif untuk mengekspor produk hasil hutan olahan bersertifikasi ramah lingkungan ke pasar Amerika Utara dan Eropa.",
+    p2: "Margin keuntungan dari ekspor kayu premium tercatat 40% lebih tinggi dibanding penjualan pasar domestik. Penjualan ini langsung meningkatkan arus kas perusahaan dalam kuartal berlanjut.",
+    p3: "Sebagai emiten dengan kapitalisasi besar di sektornya, lonjakan pendapatan ini berpotensi mendongkrak nilai dividen mingguan. Pengamat merekomendasikan HOLD bagi pemilik lama dan BUY bagi investor baru."
+  },
+  "FRT": {
+    title: "FRT Panen Raya Melimpah: Dividen Saham Pangan Semakin Terjamin",
+    p1: "Fruit (FRT) mengumumkan hasil panen raya melimpah dari seluruh perkebunan binaan mereka. Distribusi produk pangan buah segar meningkat 35% dibandingkan periode sebelumnya.",
+    p2: "Sebagai salah satu saham unggulan Dividend Warrior, FRT memprioritaskan stabilitas pengembalian laba langsung kepada pemegang saham daripada spekulasi harga drastis. Penjualan yang tinggi memastikan kas dividen berlimpah.",
+    p3: "Pemain tipe aman sangat direkomendasikan mengoleksi saham FRT sebelum jadwal RUPD tiba untuk mengamankan pendapatan pasif (passive income) mingguan."
+  },
+  "ZTA": {
+    title: "Zeta Rilis Pembaruan Aplikasi AI Terintegrasi Cloud",
+    p1: "Sektor teknologi dihebohkan oleh pengumuman dari Zeta (ZTA) yang meluncurkan pembaruan platform kecerdasan buatan enterprise berbasis cloud dengan tingkat adopsi pengguna baru yang melonjak pesat.",
+    p2: "Meski biaya riset dan pengembangan sempat menekan margin kuartal lalu, integrasi model monetisasi berlangganan bulanan diprediksi memberi pendapatan stabil jangka panjang bagi pemegang saham.",
+    p3: "Mengingat stabilitas dividen yang konsisten, ZTA menjadi pilihan menarik bagi investor yang menginginkan kombinasi pertumbuhan teknologi dan dividen defensif."
+  },
+  "MKN": {
+    title: "MyKonos Ekspansi Pasar Parfum Mewah ke Kawasan Asia Timur",
+    p1: "MyKonos Company (MKN) memperluas penetrasi pasar internasional dengan membuka butik flagship eksklusif di beberapa kota metropolitan Asia Timur.",
+    p2: "Permintaan produk parfum racikan lokal berkualitas tinggi ini melonjak tajam, mendongkrak pendapatan kotor perusahaan hingga rekor tertinggi sepanjang sejarah emiten.",
+    p3: "Prospek ekspansi global yang agresif menjadikan MKN salah satu emiten favorit pertumbuhan tinggi yang patut diperhitungkan."
+  },
+  "JGD": {
+    title: "JengaDoen Umumkan Renovasi Resor Mewah Bintang 5",
+    p1: "Hotel JengaDoen (JGD) memulai proyek renovasi besar-besaran untuk meningkatkan fasilitas resor bintang 5 guna menyambut musim liburan panjang turis mancanegara.",
+    p2: "Tingkat okupansi kamar yang mencapai rekor penuh memberikan arus kas operasional yang sangat kuat untuk menutupi biaya modal renovasi tanpa menerbitkan saham baru.",
+    p3: "Stabilitas sektor perhotelan premium ini menjamin aliran pendapatan dividen yang aman bagi para investor jangka panjang."
+  }
+};
+
+// Database Berita Safe Haven (Masing-masing 2 Paragraf)
+const SAFE_NEWS_DATABASE = {
+  "GOLD": {
+    title: "Emas Batangan: Perlindungan Utama Terhadap Ketidakpastian Makroekonomi",
+    p1: "Permintaan terhadap emas fisik dan digital melonjak drastis seiring meningkatnya kekhawatiran pelaku pasar terhadap fluktuasi nilai tukar mata uang fiat dan inflasi global. Bank sentral berbagai negara terus menambah cadangan emas mereka sebagai benteng pertahanan fiskal.",
+    p2: "Ke depan, instrumen emas diproyeksikan tetap menjadi jangkar penyelamat portofolio utama saat terjadi koreksi pasar saham massal. Stabilitas volatilitasnya yang terjaga (kenaikan maksimal 6%, penurunan terbatas 5-8%) menjadikannya pilihan favorit investor konservatif."
+  },
+  "BOND": {
+    title: "Obligasi Pemerintah: Kepastian Kupon Tetap di Tengah Gejolak Pasar",
+    p1: "Pemerintah secara resmi menerbitkan seri obligasi ritel terbaru dengan kupon kompetitif guna menyerap likuiditas domestik dan membiayai proyek infrastruktur strategis nasional jangka panjang.",
+    p2: "Instrumen surat berharga negara ini dirancang untuk memberikan jaminan pengembalian pokok dan kupon rutin tanpa terpengaruh oleh kejatuhan bursa saham. Rencana penerbitan berkelanjutan menjamin likuiditas pasar obligasi tetap likuid dan aman."
+  },
+  "CRYPTO": {
+    title: "Kripto Global: Spekulasi Volatilitas Tinggi dan Lonjakan Adopsi Institusional",
+    p1: "Pasar aset kripto global kembali mencatat pergerakan harga yang sangat agresif menyusul masuknya arus modal institusional besar dan persetujuan produk keuangan berbasis bursa kripto baru.",
+    p2: "Meskipun menawarkan potensi imbal hasil yang sangat fantastis (potensi kenaikan hingga 23%), investor harus mewaspadai risiko koreksi ekstrem (potensi penurunan hingga 31%). Aset ini sangat cocok bagi trader profil agresif yang ingin memanfaatkan momentum pantulan cepat saat pasar saham jatuh."
+  }
+};
+
+// Database Berita Khusus Koreksi Pasar
+const CORRECTION_NEWS = {
+  title: "Peringatan Darurat: Pasar Saham Memasuki Fase Koreksi Berkala 4 Hari",
+    p1: "Otoritas bursa mengumumkan dimulainya fase koreksi pasar berkala yang terjadi setiap 3 minggu sekali. Seluruh emiten saham mengalami tekanan jual serentak dengan penurunan harga berkisar antara 4% hingga 6.8% per siklus.",
+    p2: "Penyebab utama koreksi ini adalah aksi ambil untung (profit taking) besar-besaran oleh investor institusional, pengetatan likuiditas global sementara, serta penyesuaian portofolio kuartalan. Keburukan di masa depan mencakup potensi kepanikan investor ritel pemula yang menjual aset di harga rendah.",
+    p3: "Investor disarankan untuk tidak panik, memanfaatkan fasilitas aset lindung nilai (Safe Haven) seperti Emas, Obligasi, atau Kripto, atau bersiap melakukan akumulasi beli saham berkualitas di harga diskon setelah fase 4 hari koreksi ini berakhir."
+};
+
+function seededRandom(seed) {
+  let s = seed % 233280;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function hashCode(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = Math.imul(31, hash) + str.charCodeAt(i) | 0;
+  }
+  return Math.abs(hash);
+}
+
+function formatMoney(n) {
+  return "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Slot Waktu
+function get10HourSlot() { return Math.floor(Date.now() / (1000 * 60 * 60 * 10)); }
+function get3HourSlot() { return Math.floor(Date.now() / (1000 * 60 * 60 * 3)); }
+function get1HourSlot() { return Math.floor(Date.now() / (1000 * 60 * 60 * 1)); }
+
+// Logika Koreksi Pasar: Setiap 3 minggu (21 hari), koreksi berlangsung 4 hari
+function checkMarketCorrectionStatus() {
+  const now = Date.now();
+  const threeWeeksMs = 21 * 24 * 60 * 60 * 1000;
+  const fourDaysMs = 4 * 24 * 60 * 60 * 1000;
+  
+  const cycleTime = now % threeWeeksMs;
+  const isCorrecting = cycleTime < fourDaysMs;
+  
+  const alertBox = document.getElementById("marketAlertBox");
+  if (alertBox) {
+    if (isCorrecting) alertBox.classList.add("active");
+    else alertBox.classList.remove("active");
+  }
+  return isCorrecting;
+}
+
+// Update Harga Saham setiap 10 Jam
+function updatePricesIfNeeded() {
+  const currentSlot = get10HourSlot();
+  const isCorrecting = checkMarketCorrectionStatus();
+  
+  if (lastPriceUpdate === currentSlot && Object.keys(prices).length > 0) return;
+  lastPriceUpdate = currentSlot;
+
+  const seed = currentSlot + hashCode(roomCode);
+  const rng = seededRandom(seed);
+
+  STOCKS.forEach(s => {
+    if (!prices[s.symbol]) prices[s.symbol] = s.base;
+    prevPrices[s.symbol] = prices[s.symbol];
+    
+    let pctChange = 0;
+    if (isCorrecting) {
+      // Koreksi pasar: turun 4% sampai 6.8%
+      pctChange = -(0.04 + rng() * 0.028);
+    } else {
+      pctChange = s.warrior ? (rng() - 0.45) * 0.12 : (rng() - 0.42) * 0.35;
+    }
+    
+    prices[s.symbol] = Math.max(0.5, +(prices[s.symbol] * (1 + pctChange)).toFixed(2));
+    
+    if (!priceHistory[s.symbol]) priceHistory[s.symbol] = [s.base];
+    priceHistory[s.symbol].push(prices[s.symbol]);
+    if (priceHistory[s.symbol].length > 10) priceHistory[s.symbol].shift();
+  });
+  
+  saveToLocalStorage();
+}
+
+// Update Harga Safe Haven setiap 1 Jam
+function updateSafePricesIfNeeded() {
+  const currentSlot = get1HourSlot();
+  if (lastSafePriceUpdate === currentSlot && Object.keys(safePrices).length > 0) return;
+  lastSafePriceUpdate = currentSlot;
+
+  const seed = currentSlot + hashCode(roomCode + "safe");
+  const rng = seededRandom(seed);
+
+  SAFE_ASSETS.forEach(a => {
+    if (!safePrices[a.id]) safePrices[a.id] = a.base;
+    prevSafePrices[a.id] = safePrices[a.id];
+    
+    let pctChange = 0;
+    if (a.type === "stable") {
+      // Emas & Obligasi: Max naik 6%, turun 5-8% (-0.08 s.d +0.06)
+      pctChange = (rng() - 0.52) * 0.14; 
+    } else {
+      // Kripto: Max naik 23%, turun 31% (-0.31 s.d +0.23)
+      pctChange = (rng() - 0.48) * 0.54;
+    }
+    
+    safePrices[a.id] = Math.max(1.0, +(safePrices[a.id] * (1 + pctChange)).toFixed(2));
+  });
+  
+  saveToLocalStorage();
+}
+
+function initPrices() {
+  const currentSlot = get10HourSlot();
+  const seed = currentSlot + hashCode(roomCode);
+  const rng = seededRandom(seed);
+  
+  STOCKS.forEach(s => {
+    if (!prices[s.symbol]) prices[s.symbol] = +(s.base * (0.85 + rng() * 0.3)).toFixed(2);
+    prevPrices[s.symbol] = prices[s.symbol];
+    if (!priceHistory[s.symbol] || priceHistory[s.symbol].length === 0) {
+      priceHistory[s.symbol] = [prices[s.symbol]];
+    }
+  });
+
+  SAFE_ASSETS.forEach(a => {
+    if (!safePrices[a.id]) safePrices[a.id] = a.base;
+    prevSafePrices[a.id] = safePrices[a.id];
+  });
+
+  updatePricesIfNeeded();
+  updateSafePricesIfNeeded();
+}
+
+// Switch Tab Berita (Saham vs Safe Haven)
+function switchNewsTab(tab) {
+  activeNewsTab = tab;
+  renderNews();
+}
+
+function renderNews() {
+  const container = document.getElementById("newsList");
+  const isCorrecting = checkMarketCorrectionStatus();
+  
+  if (activeNewsTab === 'safe') {
+    let html = '';
+    if (isCorrecting) {
+      html += `
+        <div class="news-item" style="border-left: 4px solid var(--red);">
+          <div class="news-title" style="color:var(--red);">[PERINGATAN KOREKSI] ${CORRECTION_NEWS.title}</div>
+          <div class="news-body">
+            <p>${CORRECTION_NEWS.p1}</p>
+            <p>${CORRECTION_NEWS.p2}</p>
+            <p>${CORRECTION_NEWS.p3}</p>
+          </div>
+        </div>
+      `;
+    }
+    html += Object.values(SAFE_NEWS_DATABASE).map(n => `
+      <div class="news-item" style="border-left: 4px solid var(--gold);">
+        <div class="news-title" style="color:var(--gold);">${n.title}</div>
+        <div class="news-body">
+          <p>${n.p1}</p>
+          <p>${n.p2}</p>
+        </div>
+      </div>
+    `).join('');
+    container.innerHTML = html;
+  } else {
+    // Berita Saham Lengkap Semua Perusahaan (Update 3 Jam)
+    const slot = get3HourSlot();
+    const seed = slot + hashCode(roomCode);
+    const rng = seededRandom(seed);
+    
+    let keys = Object.keys(DETAILED_NEWS_DATABASE);
+    // Acak urutan atau ambil subset agar dinamis setiap 3 jam
+    let selectedKeys = [];
+    for(let i=0; i<4; i++) {
+      let rIdx = Math.floor(rng() * keys.length);
+      selectedKeys.push(keys[rIdx]);
+    }
+    
+    let html = '';
+    if (isCorrecting) {
+      html += `
+        <div class="news-item" style="border-left: 4px solid var(--red);">
+          <div class="news-title" style="color:var(--red);">[PERINGATAN KOREKSI] ${CORRECTION_NEWS.title}</div>
+          <div class="news-body">
+            <p>${CORRECTION_NEWS.p1}</p>
+            <p>${CORRECTION_NEWS.p2}</p>
+            <p>${CORRECTION_NEWS.p3}</p>
+          </div>
+        </div>
+      `;
+    }
+    html += selectedKeys.map(sym => {
+      const n = DETAILED_NEWS_DATABASE[sym];
+      return `
+        <div class="news-item">
+          <div class="news-title">[${sym}] ${n.title}</div>
+          <div class="news-body">
+            <p><b>Latar Belakang:</b> ${n.p1}</p>
+            <p><b>Keuangan:</b> ${n.p2}</p>
+            <p><b>Prospek:</b> ${n.p3}</p>
+          </div>
+        </div>
+      `;
+    }).join('');
+    container.innerHTML = html;
+  }
+}
+
+function renderStocks() {
+  updatePricesIfNeeded();
+  const list = document.getElementById("stockList");
+  list.innerHTML = STOCKS.map(s => {
+    const price = prices[s.symbol];
+    const prev = prevPrices[s.symbol] || price;
+    const change = price - prev;
+    const pct = prev ? ((change / prev) * 100).toFixed(2) : "0.00";
+    const isUp = change >= 0;
+    const owned = holdings[s.symbol]?.qty || 0;
+    const warriorBadge = s.warrior ? `<span class="badge-warrior">Dividend Warrior</span>` : '';
+    
+    return `
+      <div class="stock-item">
+        <div class="symbol">${s.symbol}</div>
+        <div>
+          <div class="name">${s.name} ${warriorBadge}</div>
+          <div class="desc">${s.desc} • Div: ${(s.dividendRate * 100).toFixed(1)}%/mgg</div>
+          <div class="owned">Milik: <b>${owned}</b></div>
+        </div>
+        <div class="price">${formatMoney(price)}</div>
+        <div class="change ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${pct}%</div>
+        <div class="actions">
+          <button class="btn-chart" onclick="openChartModal('${s.symbol}')">📈</button>
+          <button class="btn-buy" onclick="openTrade('${s.symbol}','buy')">Beli</button>
+          <button class="btn-sell" onclick="openTrade('${s.symbol}','sell')" ${owned === 0 ? 'disabled' : ''}>Jual</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSafeHavenMarket() {
+  updateSafePricesIfNeeded();
+  const list = document.getElementById("safeHavenList");
+  list.innerHTML = SAFE_ASSETS.map(a => {
+    const price = safePrices[a.id];
+    const prev = prevSafePrices[a.id] || price;
+    const change = price - prev;
+    const pct = prev ? ((change / prev) * 100).toFixed(2) : "0.00";
+    const isUp = change >= 0;
+    const owned = safeHoldings[a.id]?.qty || 0;
+    
+    return `
+      <div class="stock-item">
+        <div class="symbol" style="color:var(--gold)">${a.id}</div>
+        <div>
+          <div class="name">${a.name}</div>
+          <div class="desc">${a.desc}</div>
+          <div class="owned">Milik: <b>${owned} unit</b></div>
+        </div>
+        <div class="price">${formatMoney(price)}</div>
+        <div class="change ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${pct}%</div>
+        <div class="actions">
+          <button class="btn-safe" onclick="openSafeTrade('${a.id}','buy')">Beli</button>
+          <button class="btn-sell" onclick="openSafeTrade('${a.id}','sell')" ${owned === 0 ? 'disabled' : ''}>Jual</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHoldings() {
+  const el = document.getElementById("myHoldings");
+  const items = STOCKS.filter(s => (holdings[s.symbol]?.qty || 0) > 0);
+  if (!items.length) {
+    el.innerHTML = '<div style="color:var(--muted)">Belum punya saham</div>';
+  } else {
+    el.innerHTML = items.map(s => {
+      const h = holdings[s.symbol];
+      const currentValue = h.qty * prices[s.symbol];
+      const cost = h.qty * h.avgPrice;
+      const pl = currentValue - cost;
+      const isProfit = pl >= 0;
+      return `
+        <div class="holding-row">
+          <div>
+            <div>${s.symbol} × ${h.qty}</div>
+            <div style="font-size:0.75rem;color:var(--muted)">Avg: ${formatMoney(h.avgPrice)}</div>
+          </div>
+          <div style="text-align:right">
+            <div>${formatMoney(currentValue)}</div>
+            <div style="font-size:0.75rem;color:${isProfit ? 'var(--green)' : 'var(--red)'}">
+              ${isProfit ? '+' : ''}${formatMoney(pl)}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Render Safe Haven Holdings
+  const safeEl = document.getElementById("mySafeHoldings");
+  const safeItems = SAFE_ASSETS.filter(a => (safeHoldings[a.id]?.qty || 0) > 0);
+  if (!safeItems.length) {
+    safeEl.innerHTML = '<div style="color:var(--muted)">Belum punya aset safe haven</div>';
+  } else {
+    safeEl.innerHTML = safeItems.map(a => {
+      const h = safeHoldings[a.id];
+      const currentValue = h.qty * safePrices[a.id];
+      const cost = h.qty * h.avgPrice;
+      const pl = currentValue - cost;
+      const isProfit = pl >= 0;
+      return `
+        <div class="holding-row">
+          <div>
+            <div>${a.name} × ${h.qty}</div>
+            <div style="font-size:0.75rem;color:var(--muted)">Avg: ${formatMoney(h.avgPrice)}</div>
+          </div>
+          <div style="text-align:right">
+            <div>${formatMoney(currentValue)}</div>
+            <div style="font-size:0.75rem;color:${isProfit ? 'var(--green)' : 'var(--red)'}">
+              ${isProfit ? '+' : ''}${formatMoney(pl)}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// Timer RUPD Real-Time (Berjalan Tiap Menit/Detik)
+function updateRUPDCountdown() {
+  const now = Date.now();
+  const nextRUPD = lastDividendClaim + ONE_WEEK_MS;
+  const diff = nextRUPD - now;
+  
+  const timerEl = document.getElementById("rupdTimer");
+  if (!timerEl) return;
+
+  if (diff <= 0) {
+    timerEl.innerHTML = "<span style='color:var(--green)'>RUPD Hari Ini! Dividen Siap Diklaim</span>";
+  } else {
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    timerEl.textContent = `${days}h ${hours}j ${minutes}m ${seconds}d`;
+  }
+}
+
+function updatePlayerMultiplayerSync() {
+  if (!roomCode || !playerName) return;
+  const now = Date.now();
+  const roomDataKey = "bursa_room_players_" + roomCode;
+  let playersMap = {};
+  try { playersMap = JSON.parse(localStorage.getItem(roomDataKey)) || {}; } catch(e) { playersMap = {}; }
+  
+  playersMap[playerName] = {
+    netWorth: cash + calculatePortfolioValue() + calculateSafeValue() - loanData.amount,
+    lastActive: now
+  };
+  localStorage.setItem(roomDataKey, JSON.stringify(playersMap));
+  
+  const listEl = document.getElementById("playerList");
+  if (!listEl) return;
+  
+  listEl.innerHTML = Object.entries(playersMap).map(([name, pData]) => {
+    const isOnline = (now - pData.lastActive) < 120000;
+    return `
+      <div class="player-item">
+        <div>
+          <span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>
+          <b>${name}</b> ${name === playerName ? '(Saya)' : ''}
+        </div>
+        <div style="text-align:right">
+          <div>${formatMoney(pData.netWorth)}</div>
+          <div style="font-size:0.7rem; color:var(--muted)">${isOnline ? 'Aktif' : 'Offline'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function calculatePortfolioValue() {
+  let p = 0;
+  STOCKS.forEach(s => { p += (holdings[s.symbol]?.qty || 0) * (prices[s.symbol] || s.base); });
+  return p;
+}
+
+function calculateSafeValue() {
+  let p = 0;
+  SAFE_ASSETS.forEach(a => { p += (safeHoldings[a.id]?.qty || 0) * (safePrices[a.id] || a.base); });
+  return p;
+}
+
+// Grafik Modal
+function openChartModal(symbol) {
+  const stock = STOCKS.find(s => s.symbol === symbol);
+  document.getElementById("chartModalTitle").textContent = `Grafik Saham: ${symbol} (${stock.name})`;
+  document.getElementById("chartModal").classList.add("show");
+  setTimeout(() => drawStockChart(symbol), 100);
+}
+function closeChartModal() { document.getElementById("chartModal").classList.remove("show"); }
+
+function drawStockChart(symbol) {
+  const canvas = document.getElementById("stockChartCanvas");
+  const ctx = canvas.getContext("2d");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+  
+  const history = priceHistory[symbol] || [prices[symbol]];
+  const w = canvas.width; const h = canvas.height; const padding = 30;
+  ctx.clearRect(0, 0, w, h);
+  
+  let min = Math.min(...history); let max = Math.max(...history);
+  if (min === max) { min *= 0.9; max *= 1.1; }
+  
+  const getX = (i) => padding + (i / (Math.max(history.length - 1, 1))) * (w - 2 * padding);
+  const getY = (v) => h - padding - ((v - min) / (max - min)) * (h - 2 * padding);
+
+  ctx.strokeStyle = "#1e293b"; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(padding, padding); ctx.lineTo(padding, h - padding);
+  ctx.moveTo(padding, h - padding); ctx.lineTo(w - padding, h - padding);
+  ctx.stroke();
+
+  // Garis Keberuntungan (MA Sederhana - Kuning)
+  ctx.strokeStyle = "#ffc107"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  let currentMA = history[0];
+  for (let i = 0; i < history.length; i++) {
+    currentMA = (currentMA + history[i]) / 2;
+    const x = getX(i); const y = getY(currentMA);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Line Harga Saham Utama (Hijau)
+  ctx.strokeStyle = "#00d4aa"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  for (let i = 0; i < history.length; i++) {
+    const x = getX(i); const y = getY(history[i]);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+// Transaksi Saham
+function openTrade(symbol, type) {
+  currentTrade = { symbol, type };
+  const stock = STOCKS.find(s => s.symbol === symbol);
+  const price = prices[symbol];
+  document.getElementById("modalTitle").textContent = type === 'buy' ? `Beli Saham ${symbol}` : `Jual Saham ${symbol}`;
+  document.getElementById("modalInfo").textContent = `${stock.name} • ${formatMoney(price)}`;
+  document.getElementById("shareInput").value = 10;
+  document.getElementById("confirmBtn").className = type === 'buy' ? 'btn-buy' : 'btn-sell';
+  document.getElementById("confirmBtn").textContent = type === 'buy' ? 'Beli' : 'Jual';
+  document.getElementById("tradeModal").classList.add("show");
+  document.getElementById("shareInput").focus();
+}
+function closeModal() { document.getElementById("tradeModal").classList.remove("show"); currentTrade = null; }
+
+function confirmTrade() {
+  if (!currentTrade) return;
+  const qty = parseInt(document.getElementById("shareInput").value);
+  if (!qty || qty < 1) return alert("Masukkan jumlah valid!");
+  const { symbol, type } = currentTrade;
+  const price = prices[symbol];
+  const total = +(price * qty).toFixed(2);
+
+  if (type === 'buy') {
+    if (cash < total) return alert("Uang tunai tidak cukup!");
+    cash = +(cash - total).toFixed(2);
+    if (!holdings[symbol]) holdings[symbol] = { qty: 0, avgPrice: 0 };
+    const h = holdings[symbol];
+    const newQty = h.qty + qty;
+    h.avgPrice = +((h.avgPrice * h.qty + price * qty) / newQty).toFixed(2);
+    h.qty = newQty;
+  } else {
+    if (!holdings[symbol] || holdings[symbol].qty < qty) return alert("Saham tidak cukup!");
+    cash = +(cash + total).toFixed(2);
+    holdings[symbol].qty -= qty;
+    if (holdings[symbol].qty === 0) delete holdings[symbol];
+  }
+  updateStats(); renderStocks(); renderHoldings(); closeModal();
+}
+
+// Transaksi Safe Haven
+function openSafeTrade(id, type) {
+  currentSafeTrade = { id, type };
+  const asset = SAFE_ASSETS.find(a => a.id === id);
+  const price = safePrices[id];
+  document.getElementById("safeModalTitle").textContent = type === 'buy' ? `Beli ${asset.name}` : `Jual ${asset.name}`;
+  document.getElementById("safeModalInfo").textContent = `${asset.desc} • Harga: ${formatMoney(price)}`;
+  document.getElementById("safeShareInput").value = 1;
+  document.getElementById("confirmSafeBtn").className = type === 'buy' ? 'btn-safe' : 'btn-sell';
+  document.getElementById("safeSafeModal") || document.getElementById("safeTradeModal").classList.add("show");
+  document.getElementById("safeShareInput").focus();
+}
+function closeSafeModal() { document.getElementById("safeTradeModal").classList.remove("show"); currentSafeTrade = null; }
+
+document.getElementById("confirmSafeBtn").onclick = function() {
+  if (!currentSafeTrade) return;
+  const qty = parseInt(document.getElementById("safeShareInput").value);
+  if (!qty || qty < 1) return alert("Masukkan jumlah valid!");
+  const { id, type } = currentSafeTrade;
+  const price = safePrices[id];
+  const total = +(price * qty).toFixed(2);
+
+  if (type === 'buy') {
+    if (cash < total) return alert("Uang tunai tidak cukup!");
+    cash = +(cash - total).toFixed(2);
+    if (!safeHoldings[id]) safeHoldings[id] = { qty: 0, avgPrice: 0 };
+    const h = safeHoldings[id];
+    const newQty = h.qty + qty;
+    h.avgPrice = +((h.avgPrice * h.qty + price * qty) / newQty).toFixed(2);
+    h.qty = newQty;
+  } else {
+    if (!safeHoldings[id] || safeHoldings[id].qty < qty) return alert("Aset Safe Haven tidak cukup!");
+    cash = +(cash + total).toFixed(2);
+    safeHoldings[id].qty -= qty;
+    if (safeHoldings[id].qty === 0) delete safeHoldings[id];
+  }
+  updateStats(); renderSafeHavenMarket(); renderHoldings(); closeSafeModal();
+};
+
+// Update Statistik & Cek Dividen RUPD
+function checkAndApplyLoanInterest() {
+  if (loanData.amount <= 0) return;
+  const timeElapsed = Date.now() - loanData.borrowedTime;
+  const isOverdue = timeElapsed > ONE_WEEK_MS;
+  const loanInfoEl = document.getElementById("loanInfo");
+  if (loanInfoEl) {
+    loanInfoEl.innerHTML = `Hutang: <b>${formatMoney(loanData.amount)}</b><br><span style="color:${isOverdue?'var(--red)':'var(--yellow)'}">${isOverdue?'Jatuh Tempo (12%)':'Bunga Standar (9.8%)'}</span>`;
+  }
+}
+
+function updateStats() {
+  const portfolio = calculatePortfolioValue();
+  const safePortfolio = calculateSafeValue();
+  checkAndApplyLoanInterest();
+  const totalNetWorth = cash + portfolio + safePortfolio - loanData.amount;
+  
+  document.getElementById("cash").textContent = formatMoney(cash);
+  document.getElementById("portfolio").textContent = formatMoney(portfolio);
+  document.getElementById("safePortfolio").textContent = formatMoney(safePortfolio);
+  document.getElementById("total").textContent = formatMoney(totalNetWorth);
+  
+  const ht = document.getElementById("holdingsTotal");
+  if (ht) ht.textContent = formatMoney(portfolio);
+  const st = document.getElementById("safeHoldingsTotal");
+  if (st) st.textContent = formatMoney(safePortfolio);
+  
+  saveToLocalStorage();
+  updatePlayerMultiplayerSync();
+}
+
+function checkWeeklyDividends() {
+  const now = Date.now();
+  if (now - lastDividendClaim >= ONE_WEEK_MS) {
+    let totalDiv = 0;
+    STOCKS.forEach(s => {
+      const qty = holdings[s.symbol]?.qty || 0;
+      if (qty > 0) totalDiv += (prices[s.symbol] || s.base) * s.dividendRate * qty;
+    });
+    if (totalDiv > 0) {
+      cash += totalDiv;
+      lastDividendClaim = now;
+      alert(`🎉 RUPD Tiba! Anda menerima pembagian dividen mingguan sebesar ${formatMoney(totalDiv)}!`);
+      updateStats();
+    }
+  }
+}
+
+function claimWeeklyDividendsManual() {
+  const now = Date.now();
+  if (now - lastDividendClaim < ONE_WEEK_MS) {
+    alert("RUPD digelar otomatis setiap 1 minggu sekali sesuai jadwal.");
+  } else {
+    checkWeeklyDividends();
+  }
+}
+
+// Pinjaman Kebangkrutan
+let currentLoanAction = 'borrow';
+function openLoanModal(action) {
+  currentLoanAction = action;
+  const modalDesc = document.getElementById("loanModalDesc");
+  const input = document.getElementById("loanInput");
+  if (action === 'borrow') {
+    document.getElementById("loanModalTitle").textContent = "Pinjaman Kebangkrutan";
+    modalDesc.textContent = `Maks $100,000. Bunga 9.8% per minggu. Hutang saat ini: ${formatMoney(loanData.amount)}`;
+    input.placeholder = "Jumlah pinjaman ($)";
+  } else {
+    document.getElementById("loanModalTitle").textContent = "Bayar Hutang";
+    modalDesc.textContent = `Sisa hutang: ${formatMoney(loanData.amount)}`;
+    input.placeholder = "Jumlah bayar ($)";
+  }
+  input.value = "";
+  document.getElementById("loanModal").classList.add("show");
+}
+function closeLoanModal() { document.getElementById("loanModal").classList.remove("show"); }
+
+function confirmLoanAction() {
+  const val = parseFloat(document.getElementById("loanInput").value);
+  if (!val || val <= 0) return alert("Masukkan nominal valid!");
+  if (currentLoanAction === 'borrow') {
+    if (loanData.amount + val > MAX_LOAN) return alert("Maksimal pinjaman $100,000!");
+    const withInterest = val * (1 + 0.098);
+    loanData.amount += withInterest;
+    if (loanData.borrowedTime === 0) loanData.borrowedTime = Date.now();
+    cash += val;
+    alert(`Pinjaman dicairkan! Total tagihan: ${formatMoney(withInterest)}`);
+  } else {
+    if (val > cash) return alert("Uang tunai tidak cukup!");
+    if (val > loanData.amount) return alert("Melebihi sisa hutang!");
+    cash -= val; loanData.amount -= val;
+    if (loanData.amount <= 0) { loanData.amount = 0; loanData.borrowedTime = 0; }
+    alert("Pembayaran berhasil!");
+  }
+  updateStats(); closeLoanModal();
+}
+
+function saveToLocalStorage() {
+  if (!roomCode || !playerName) return;
+  const saveData = { cash, holdings, safeHoldings, prices, prevPrices, safePrices, prevSafePrices, priceHistory, roomCode, playerName, loanData, lastDividendClaim, lastPriceUpdate, lastSafePriceUpdate };
+  localStorage.setItem(`bursa_saham_save_${roomCode}_${playerName}`, JSON.stringify(saveData));
+}
+
+function loadFromLocalStorage() {
+  const saved = localStorage.getItem(`bursa_saham_save_${roomCode}_${playerName}`);
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      cash = data.cash ?? STARTING_CASH;
+      holdings = data.holdings ?? {};
+      safeHoldings = data.safeHoldings ?? {};
+      prices = data.prices ?? {};
+      prevPrices = data.prevPrices ?? {};
+      safePrices = data.safePrices ?? {};
+      prevSafePrices = data.prevSafePrices ?? {};
+      priceHistory = data.priceHistory ?? {};
+      loanData = data.loanData ?? { amount: 0, borrowedTime: 0 };
+      lastDividendClaim = data.lastDividendClaim ?? Date.now();
+      lastPriceUpdate = data.lastPriceUpdate ?? 0;
+      lastSafePriceUpdate = data.lastSafePriceUpdate ?? 0;
+    } catch(e) { console.error(e); }
+  }
+}
+
+function resetGame() {
+  if (!confirm("Reset semua progress?")) return;
+  localStorage.removeItem(`bursa_saham_save_${roomCode}_${playerName}`);
+  cash = STARTING_CASH; holdings = {}; safeHoldings = {};
+  loanData = { amount: 0, borrowedTime: 0 }; lastDividendClaim = Date.now();
+  initPrices(); updateStats(); renderStocks(); renderSafeHavenMarket(); renderHoldings(); renderNews();
+}
+
+function showScore() {
+  const netWorth = cash + calculatePortfolioValue() + calculateSafeValue() - loanData.amount;
+  const profit = netWorth - STARTING_CASH;
+  alert(`Pemain: ${playerName} | Room: ${roomCode}\nNet Worth: ${formatMoney(netWorth)}\nProfit: ${profit >= 0 ? '+' : ''}${formatMoney(profit)}`);
+}
+
+function joinRoom() {
+  const name = document.getElementById("playerNameInput").value.trim();
+  const code = document.getElementById("roomInput").value.trim().toUpperCase();
+  if (!name || name.length < 2) return alert("Masukkan Nama Pemain minimal 2 huruf!");
+  if (!code || code.length < 3) return alert("Masukkan Kode Room minimal 3 huruf!");
+  
+  playerName = name; roomCode = code;
+  document.getElementById("playerDisplay").textContent = playerName;
+  document.getElementById("roomDisplay").textContent = roomCode;
+  document.getElementById("joinScreen").style.display = "none";
+  document.getElementById("gameScreen").style.display = "block";
+  
+  loadFromLocalStorage();
+  initPrices();
+  checkWeeklyDividends();
+  renderNews();
+  renderStocks();
+  renderSafeHavenMarket();
+  renderHoldings();
+  updateStats();
+
+  // Loop interval routine
+  setInterval(() => {
+    updatePricesIfNeeded();
+    updateSafePricesIfNeeded();
+    checkWeeklyDividends();
+    updateRUPDCountdown();
+    renderStocks();
+    renderSafeHavenMarket();
+    renderHoldings();
+    updateStats();
+    renderNews();
+  }, 1000); // Berjalan setiap detik untuk timer RUPD & update real-time
+}
+
+document.getElementById("confirmBtn").onclick = confirmTrade;
+document.getElementById("shareInput").addEventListener("keypress", e => { if (e.key === "Enter") confirmTrade(); });
+document.getElementById("safeShareInput").addEventListener("keypress", e => { if (e.key === "Enter") document.getElementById("confirmSafeBtn").click(); });
+document.getElementById("roomInput").addEventListener("keypress", e => { if (e.key === "Enter") joinRoom(); });
+</script>
+</body>
+</html>
